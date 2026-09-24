@@ -6,3 +6,4 @@ recursica_brand.json
 recursica_tokens.json
 recursica_ui-kit.json
 src/recursica_fonts.css
+src/app/**/registry.generated.ts

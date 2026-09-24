@@ -14,6 +14,9 @@ node_modules/
 dist/
 dist-ssr/
 
+# Angular CLI build cache
+.angular/cache
+
 # OS metadata
 .DS_Store
 Thumbs.db
@@ -35,6 +38,10 @@ Thumbs.db
 # Typescript build cache
 *.tsbuildinfo
 
-# Generated at build time by vite.config.ts from recursica_tokens.json +
-# recursica_brand.json — see ARCHITECTURE.md
+# Generated at build time from recursica_tokens.json + recursica_brand.json
+# — see ARCHITECTURE.md
 src/recursica_fonts.css
+
+# Generated auto-discovery registries — see ARCHITECTURE.md and
+# scripts/generate-registries.mjs
+src/app/**/registry.generated.ts

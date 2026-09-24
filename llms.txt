@@ -1,0 +1,9 @@
+# Recursica Prototype (Angular)
+
+> A prototyping system for quick, throwaway UI prototypes built on the Recursica design system, using Angular and Angular Material.
+
+## Docs
+
+- [AGENT.md](./AGENT.md): Rules and process for AI agents building prototypes in this repo.
+- [ARCHITECTURE.md](./ARCHITECTURE.md): Stack, tooling, and app structure.
+- [docs/PROTOTYPE.md](./docs/PROTOTYPE.md): The designer-conversation process for creating a new prototype.

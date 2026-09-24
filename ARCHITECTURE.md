@@ -2,161 +2,114 @@
 
 ## Overview
 
-`recursica-proto-template` is a starting point for quick, throwaway UI prototypes built on the Recursica design system. It's a plain Vite + React app — no Storybook, no published package, nothing to publish to npm — just enough scaffolding and tooling to spin up a prototype fast without reinventing the build/lint/format setup each time.
+A starting point for quick, throwaway UI prototypes built on the Recursica design system. A plain application — no Storybook, no published package, nothing to publish to npm — just enough scaffolding and tooling to spin up a prototype fast without reinventing the build/lint/format setup each time.
 
 ## Stack
 
-- **[Vite](https://vite.dev/)** (`vite.config.ts`) — dev server and build, via `@vitejs/plugin-react`.
-- **React 19** + **[react-router](https://reactrouter.com/) 8** — `src/main.tsx` mounts the app inside a `BrowserRouter`; `src/App.tsx` declares routes, one per file under `src/routes/`.
-- **TypeScript** — split via project references: `tsconfig.json` (root, no files of its own) references `tsconfig.app.json` (`src/`) and `tsconfig.node.json` (`vite.config.ts`). `npm run check-types` runs `tsc -b` across both.
-- **[Mock Service Worker](https://mswjs.io/)** — mocks the API layer shared across prototypes. `public/mockServiceWorker.js` is the generated service worker (`msw init`, excluded from Prettier); `src/main.tsx`'s `enableMocking()` starts it dev-only, before the app renders. See `src/api/` under App structure below.
-- **[React Hook Form](https://react-hook-form.com/)** — form state/validation, wired to design-system inputs via `Controller` rather than `register()`. See Forms below.
+- **Angular CLI** (application builder, esbuild-based, with a Vite-powered dev server) — dev server and build.
+- **Angular Router** — the root shell wires up one route per page/prototype, discovered automatically (see App structure below).
+- **TypeScript**, strict mode, with the Angular compiler's own template type-checking (`strictTemplates`) layered on top of the usual type check. `npm run check-types` runs the full project + template check.
+- **[Mock Service Worker](https://mswjs.io/)** — mocks the API layer shared across prototypes. It intercepts at the network layer rather than inside any particular UI framework, so it needs no framework-specific wiring beyond starting it. `public/mockServiceWorker.js` is the generated service worker (`msw init`, excluded from Prettier); `main.ts`'s `enableMocking()` starts it dev-only, before the app bootstraps. See `src/api/` under App structure below.
+- **Reactive Forms** — form state/validation, bound directly to design-system inputs. See Forms below.
 
 ## Design system integration
 
-- **`@mantine/core`, `@mantine/dates`, `@mantine/hooks`** — the underlying component/UI framework (peer to the adapter below).
-- **`@recursica/adapter-mantine-v8`** — Recursica's component layer over Mantine. `main.tsx` wraps the app in `MantineProvider` then `RecursicaThemeProvider` (`theme="light"`), and pages import components from the adapter (e.g. `Container` in `src/routes/Home.tsx`) rather than straight from Mantine.
+- The Recursica component layer is the only source of UI components a prototype should import — never reach for the underlying UI kit's components directly.
 - **`recursica.json`** — project manifest read by Recursica's own tooling (schema-versioned; declares this project by name/path).
-- **`recursica_brand.json`, `recursica_tokens.json`, `recursica_ui-kit.json`, `recursica_variables_scoped.css`** — exported Recursica design tokens. The `.css` file is imported directly in `main.tsx`; the `.json` files back the postcss step below and are excluded from Prettier (`.prettierignore`) since they're generated, not hand-authored.
-- **`@recursica/recursica-postcss-vars`** (`postcss.config.js`) — rewrites/scopes the design-token CSS variables at build time, reading `recursica_variables_scoped.css`. Runs in `strict` mode only when `NODE_ENV=production`, so a missing/renamed token warns locally but fails a production build.
-- **`src/recursica_fonts.css`** — generated (git-ignored) by a Vite plugin in `vite.config.ts`, imported by `main.tsx`. Resolves `brand.fonts.primary`/`secondary` in `recursica_brand.json` to their typeface's Google Fonts URL in `recursica_tokens.json` and writes `@import url(...)` lines for just those. Runs on every `dev`/`build` (and re-runs on save if either source file changes while `dev` is running), so the font imports always match the current brand — and `recursica_tokens.json` itself, which is large, is only ever read on the Node side, never imported into app code or the client bundle. Every step (files exist, the typeface is actually listed, its URL is well-formed and is a `fonts.googleapis.com` URL) is validated with no fallback — a bad or missing source throws and aborts the build/dev-server rather than rendering with a silently wrong font.
-- **`postcss-preset-mantine`** — Mantine's own postcss helpers (e.g. `rem()`/`em()` conversion), run alongside the plugin above.
-- **`@recursica/eslint-plugin`** — lints for design-system misuse. Currently just `recursica/no-over-styled` (`error`), which flags the adapter's `overStyled` escape hatch so it doesn't quietly become permanent (see the plugin's own guidance to use a supported variant/prop instead, or track removal). Wired into `eslint.config.mjs` by hand rather than via the plugin's `configs.recommended`, because that export is in old eslintrc shape (`plugins: ["recursica"]`) and flat config rejects it.
+- **`recursica_brand.json`, `recursica_tokens.json`, `recursica_ui-kit.json`, `recursica_variables_scoped.css`** — exported Recursica design tokens. Never hand-edit these — they come from Recursica's own export tooling, and are excluded from Prettier accordingly.
+- **A build-time token-variable check** — rewrites/validates the design-token CSS variables at build time. Runs in strict mode only in production, so a missing/renamed token warns locally but fails a production build.
+- **A generated font stylesheet** — resolves the brand's primary/secondary typefaces to their Google Fonts URLs and writes the `@import` lines for just those. Regenerates on every dev/build (and on save, if either source file changes while the dev server is running), so the font imports always match the current brand. Every step (files exist, the typeface is actually listed, its URL is well-formed) is validated with no fallback — a bad or missing source throws and aborts the build/dev-server rather than rendering with a silently wrong font.
+- **A design-system lint rule** flags the adapter's style-override escape hatch, so it doesn't quietly become permanent — use a supported variant/prop instead, or track its removal.
+- **Angular Material's own theming** is a Sass build-time step (no runtime `ThemeProvider`) — `src/styles.scss` calls its `theme()` mixin twice, scoped under the `data-recursica-theme="light"|"dark"` attribute the theme-provider component sets on `<html>`, so one attribute write drives both Recursica's and Material's theme variables together. The production bundle-size budget in `angular.json` is raised well past Angular's default — `recursica_variables_scoped.css` alone is close to 2MB, and that's expected, not bloat to chase down.
 
 ## Forms
 
-**[React Hook Form](https://react-hook-form.com/)** handles form state/validation. Wire each field with its `Controller` component instead of `register()`:
+**Reactive Forms** (`FormGroup`/`FormControl`) handle form state/validation, bound straight to design-system inputs:
 
-```tsx
-<Controller
-  name="email"
-  control={control}
-  rules={{ required: "Email is required" }}
-  render={({ field, fieldState }) => (
-    <TextField
-      label="Email"
-      value={field.value}
-      onChange={field.onChange}
-      onBlur={field.onBlur}
-      error={fieldState.error?.message}
-    />
-  )}
-/>
+```ts
+this.form = new FormGroup({
+  email: new FormControl("", [Validators.required]),
+});
 ```
 
-Why `Controller` and not `register()`: `register()` returns a native `{ name, onChange, onBlur, ref }` bundle meant to be spread onto an uncontrolled `<input>`, which depends on the component forwarding `ref` straight through to the DOM node the way it currently does. `Controller`'s `render` prop only needs a component that accepts `value`/`onChange` (plus `label`/`error` for messages) — the controlled-input contract every Recursica adapter exposes, regardless of which UI library backs it. That's what keeps a form working if the adapter is ever swapped (e.g. Mantine → MUI), per the "everything must stay UI-library-agnostic" ask that drove this choice.
+```html
+<rec-text-field label="Email" [formControl]="form.controls.email" />
+```
 
-See `src/routes/prototypes/demo/` for a full working example (text/number inputs, dropdowns, a text area, and a submit handler wired to a mock API).
+Why this works with no extra wiring: every design-system form control implements the platform's own value-accessor/validator contract directly, so binding a control straight to the field just works — there's no separate controlled-input bridge to maintain by hand.
+
+See an existing prototype that submits a form (edit modal, settings page, etc.) for a full working example — text/number inputs, dropdowns, a text area, and a submit handler wired to a mock API.
 
 ## Code quality tooling
 
-- **ESLint** (`eslint.config.mjs`, flat config) — `@eslint/js` + `typescript-eslint` recommended rules over `**/*.{ts,tsx}`, plus `eslint-plugin-react-hooks`, `eslint-plugin-react-refresh` (Vite fast-refresh safety), and the Recursica plugin above.
-- **Prettier** (`prettier.config.mjs` — empty, i.e. all defaults; `.prettierignore` excludes `dist`, the generated `recursica_*` files, and the generated `public/mockServiceWorker.js`).
-- **Husky + lint-staged** — `.husky/pre-commit` runs `npx lint-staged --config scripts/lint-staged.config.cjs`, which on staged `*.{json,md,css,scss}` runs Prettier, and on staged `*.{js,jsx,ts,tsx}` runs Prettier + `eslint --fix` + a full `check-types` pass across the whole project (not just the staged files). The JSON/MD/CSS glob filters out symlinks before invoking Prettier — Prettier hard-errors on an explicitly-named symlink (e.g. `CLAUDE.md → AGENT.md`) even when the target is in `.prettierignore`, which would otherwise fail every commit that touches it.
+- **Linting** — the framework's recommended rules, plus the Recursica plugin that flags design-system misuse (currently just the style-override escape hatch).
+- **Formatting** — Prettier, default config. Generated files (the `recursica_*` exports, the generated service worker) are excluded since they're not hand-authored.
+- **Pre-commit** — a staged-files hook runs formatting + lint with autofix + a full project type/template check (not just the staged files), so a bad commit can't slip through partial coverage.
 
 ## Scripts (`package.json`)
 
-| Script                    | What it does                                                     |
-| ------------------------- | ---------------------------------------------------------------- |
-| `dev`                     | `vite` dev server                                                |
-| `build`                   | `format` → `lint:fix` → `lint` → `tsc -b` → `vite build`         |
-| `preview`                 | Serve the production build locally                               |
-| `lint` / `lint:fix`       | `eslint .` (with/without `--fix`)                                |
-| `format` / `format:check` | `prettier --write` / `--check` over the whole tree               |
-| `check-types`             | `tsc -b`                                                         |
-| `prepare`                 | Installs Husky's git hooks (runs automatically on `npm install`) |
+| Script                    | What it does                                                           |
+| ------------------------- | ---------------------------------------------------------------------- |
+| `dev`                     | dev server                                                             |
+| `build`                   | format → lint:fix → lint → full type/template check → production build |
+| `preview`                 | serve the production build locally                                     |
+| `lint` / `lint:fix`       | lint the project, with/without autofix                                 |
+| `format` / `format:check` | Prettier over the whole tree                                           |
+| `check-types`             | full project type/template check                                       |
 
 ## CI (`.github/workflows/`)
 
-- **`pull-request.yml`** — on every PR to `main`, one job, one install/build (no duplicate work across separate check/preview workflows): `npm run build` (which itself chains format → lint:fix → lint → tsc -b → vite build, so this single step is the type-check, the lint check, and the build) with `--base=/<repo>/pr-preview/pr-<number>/`, then publishes that build as a live preview via `rossjrw/pr-preview-action` and posts the link into an "App preview" section of the PR description. A failing build/lint/type-check fails the PR and skips the preview. Tears the preview down automatically on PR close.
-- **`deploy.yml`** — on push to `main`: builds the app with `--base=/<repo>/` (repo name read from the GitHub context, not hardcoded, since this is a template) and publishes `dist/` to the `gh-pages` branch via `JamesIves/github-pages-deploy-action`. Copies `index.html` to `404.html` in the build output so GitHub Pages serves the app (not a real 404) for react-router deep links.
-  - **First-time setup** (not done by the workflow): GitHub Pages must be enabled once in repo Settings → Pages, source "Deploy from a branch" → `gh-pages`, after the first `deploy.yml` run creates that branch.
+- **`pull-request.yml`** — on every PR: one install/build job (format, lint, type-check, and build all happen inside the single build step) publishes the result as a live preview and posts the link into the PR description. A failing build/lint/type-check fails the PR and skips the preview. Tears the preview down automatically on PR close.
+- **`deploy.yml`** — on push to `main`: builds and publishes to GitHub Pages. Ships a `404.html` fallback (a copy of `index.html`) so deep links into a client-side route still resolve, since Pages has no rewrite rules of its own.
+  - **First-time setup** (not done by the workflow): GitHub Pages must be enabled once in repo Settings → Pages, source "Deploy from a branch" → `gh-pages`, after the first deploy run creates that branch.
 
-## Editor tooling
+## Crawler blocking
 
-- **`.vscode/mcp_config.json`** — configures the Mantine MCP server (`@mantine/mcp-server`) for editors/agents that support MCP, so component docs/APIs are queryable while prototyping.
+Every prototype here is throwaway and not meant to be found: `public/robots.txt` disallows everything, and the page carries a `noindex, nofollow, noarchive, nosnippet` meta tag.
 
 ## App structure
 
 ```
 src/
-  main.tsx        # Entry point: enableMocking() → MantineProvider → RecursicaThemeProvider → BrowserRouter → App
-  App.tsx          # react-router <Routes>, one <Route> per page/prototype
-  routes/          # One file per route (e.g. Home.tsx)
-    modes.ts       # `Mode` type + `useModes`/`usePrototypeModes` — the
-                   #   `?mode=<id>` convention
-    ModesPanel.tsx # Slide-out (right) picker UI for a prototype's modes
-    Prototype.tsx  # <Prototype> wrapper every prototype renders through —
-                   #   always mounts ModesPanel, even with no modes
-    prototypes/    # index.ts auto-discovers every <slug>/index.tsx below it
-      <slug>/      #   and registers it at /prototypes/<slug> — no manual
-        index.tsx  #   route or Home wiring needed to add one
-        modes.ts   #   optional: this prototype's `modes: Mode[]`
-  data/            # Mock datasets shared across prototypes
-    index.ts       # Registry: auto-discovers every <name>/index.ts below
-    <name>/        #   a typed, JSDoc'd data array; import it directly
-      index.ts     #   from a prototype for full type safety
-  api/             # Mock APIs (MSW) shared across prototypes
-    index.ts       # Registry: aggregates every <name>/index.ts's handlers
-    worker.ts      # setupWorker(...apiHandlers) — started by main.tsx
-    <name>/        # index.ts exports `handlers`, typed + JSDoc'd; just
-      index.ts     #   add the folder to register a new mock endpoint
-  assets/          # Static assets imported by components
-  recursica_fonts.css  # Generated font @imports — see src/recursica_fonts.css above
-public/            # Static assets served as-is (favicon, icons, mockServiceWorker.js)
+  main.ts           # Entry point: enableMocking() → bootstrap → router
+  styles.scss       # Global styles: Material theming, token CSS, fonts
+  index.html
+  recursica_fonts.css  # Generated font @imports — see below
+  app/
+    app.ts          # Root shell: wraps everything in the theme provider
+    app.routes.ts   # one route per page/prototype, generated automatically
+    home/           # "/" — lists every discovered prototype
+    modes/          # Mode type + the `?mode=<id>` convention, the picker
+                     #   panel, and the wrapper every prototype's page
+                     #   renders through
+    prototypes/     # auto-discovered: dropping a folder in registers a
+      <slug>/       #   route, no manual wiring
+        index.ts    #   page component
+        modes.ts    #   optional: this prototype's mode definitions
+    data/           # Mock datasets shared across prototypes
+      <name>/       #   a typed, documented data array; import it directly
+                     #   from a prototype for full type safety
+    api/            # Mock APIs (MSW) shared across prototypes
+      worker.ts     # the MSW worker, started at bootstrap
+      <name>/       # exports `handlers`, typed + documented; just add the
+                     #   folder to register a new mock endpoint
+public/             # Static assets served as-is (favicon, icons, the
+                     #   generated service worker)
 docs/
-  PROTOTYPE.md     # Process for creating a new prototype — see AGENT.md/README.md
+  PROTOTYPE.md      # Process for creating a new prototype
 ```
 
-Home (`/`) lists every discovered prototype, each self-contained in its own
-`src/routes/prototypes/<slug>/` folder so prototypes can't affect each
-other — except for the shared `src/data/` and `src/api/` mocks, which any
-prototype may use (see Prototype conventions below).
+Home (`/`) lists every discovered prototype, each self-contained in its own folder so prototypes can't affect each other — except for the shared mock data/API folders, which any prototype may use (see Prototype conventions below).
 
 ## Prototype conventions
 
-- **Isolation.** No code sharing between prototypes — no shared code or
-  folders outside a prototype's own folder, other than the app chrome under
-  `src/routes/`, the registry (`src/routes/prototypes/index.ts`), the
-  modes convention (`src/routes/modes.ts`, `src/routes/ModesPanel.tsx`,
-  `src/routes/Prototype.tsx`), and the shared mock data/API folders below.
-  A prototype must not import from or modify another prototype's folder.
-- **Mock data & mock APIs are the two deliberate exceptions.** Real
-  prototypes need to call something, so `src/data/<name>/` (typed,
-  JSDoc'd datasets) and `src/api/<name>/` ([MSW](https://mswjs.io/)
-  handlers, typed + JSDoc'd) are shared and reusable across prototypes.
-  Both are auto-discovered by their own registry — see the App structure
-  tree above. Each dataset/API also exports a `description` string so
-  its purpose is discoverable without opening the file.
-- **Bad-data and API-error scenarios are first-class, not an afterthought.**
-  Every dataset ships bad-data sets alongside the good one (empty, and
-  malformed/schema-violating records), and every mock API ships
-  error/malformed handlers alongside its default one. See
-  `src/data/greetings/` + `src/api/greetings/` for a working example.
-- **Every prototype renders through `<Prototype>`** (`src/routes/Prototype.tsx`),
-  which always mounts the mode-picker panel — so `?mode`/`?modes` opens it
-  even for a prototype with no modes defined, not just ones that opted in.
-- **Modes select which mock data/API behavior a prototype uses**, by
-  number, via `?mode=<id>` — the generalized, reusable version of swapping
-  scenarios in with `worker.use(...)` / back out with
-  `worker.resetHandlers()` (`src/api/worker.ts`). A prototype that wants
-  modes adds a colocated `modes.ts` (`Mode[]` from `src/routes/modes.ts`),
-  passes it as `<Prototype modes={modes}>`, and reads the active one with
-  `usePrototypeModes()`. `ModesPanel` (`src/routes/ModesPanel.tsx`) is the
-  picker itself, sliding out from the right when the URL asks for it
-  (`?mode` with no value, or `?modes`) rather than naming a mode directly.
-  See `docs/PROTOTYPE.md` for the designer-facing process and
-  `src/routes/prototypes/demo/` for a working example.
-- **Everything is routable**, including modals — a modal should be
-  routable within its page (e.g. via a search param) so it can be navigated
-  back to, shared, or reloaded without being lost.
-- **State lives at the page level; components are stateless.** Transitions
-  between pages pass state through the URL (path segments and search
-  params) rather than global state or storage, so routes stay
-  shareable/restorable from the URL alone.
-- **Global state, when the URL can't hold enough:** a React context +
-  provider that the prototype owns and wraps itself in. There's no
-  shared/app-level provider, since prototypes can't know about each other.
+- **Isolation.** No code sharing between prototypes — no shared code or folders outside a prototype's own folder, other than the app chrome, the routing registry, the modes convention, and the shared mock data/API folders below. A prototype must not import from or modify another prototype's folder.
+- **Mock data & mock APIs are the two deliberate exceptions.** Real prototypes need to call something, so typed, documented datasets and [MSW](https://mswjs.io/) handlers are shared and reusable across prototypes. Each dataset/API also exports a `description` string so its purpose is discoverable without opening the file.
+- **Bad-data and API-error scenarios are first-class, not an afterthought.** Every dataset ships bad-data sets alongside the good one (empty, and malformed/schema-violating records), and every mock API ships error/malformed handlers alongside its default one.
+- **Every prototype renders through the shared page wrapper**, which always mounts the mode-picker panel — so `?mode`/`?modes` opens it even for a prototype with no modes defined, not just ones that opted in.
+- **Modes select which mock data/API behavior a prototype uses**, by number, via `?mode=<id>`. A prototype that wants modes adds a colocated `modes.ts`, and reads the active one from the shared modes service. See `docs/PROTOTYPE.md` for the designer-facing process.
+- **Everything is routable**, including modals — a modal should be routable within its page (e.g. via a search param) so it can be navigated back to, shared, or reloaded without being lost.
+- **State lives at the page level; components are stateless.** Transitions between pages pass state through the URL (path segments and search params) rather than global state or storage, so routes stay shareable/restorable from the URL alone.
+- **Global state, when the URL can't hold enough:** a scoped service the prototype owns and provides for itself. There's no shared/app-level state, since prototypes can't know about each other.
 
-See `AGENT.md` for the full rules AI agents follow when working on
-prototypes.
+See `AGENT.md` for the full rules AI agents follow when working on prototypes.

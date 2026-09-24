@@ -8,7 +8,7 @@ prototype"; this document is about what to ask before writing any of it.
 ## 1. Name it
 
 Ask for (or propose) a short, kebab-case name. It becomes both the
-prototype's folder and its URL: `src/routes/prototypes/<name>/` →
+prototype's folder and its URL: `src/app/prototypes/<name>/` →
 `/prototypes/<name>`.
 
 ## 2. Understand the UX
@@ -23,8 +23,8 @@ Essential questions for every prototype — don't skip these:
 - **What mock data does it need?** What shape, roughly how many records,
   which fields matter to the UX being shown.
 - **What APIs (if any) does it call?** What each one returns on success.
-- **Check what already exists before proposing something new.** List
-  `src/data/` and `src/api/` (every entry exports a `description`, so this
+- **Check what already exists before proposing something new.** List the
+  `data/` and `api/` folders (every entry exports a `description`, so this
   is quick) and reuse a dataset/API instead of duplicating a shape that's
   already there.
 - **Mention related existing prototypes**, if any — worth a look before
@@ -38,8 +38,8 @@ slow). If so, each state becomes a **mode** — see below.
 
 ## 5. Build it
 
-Create `src/routes/prototypes/<name>/index.tsx` per AGENT.md's mechanical
-steps, using the data/API entries from step 3 and the modes from step 4.
+Create the prototype's page per AGENT.md's mechanical steps, using the
+data/API entries from step 3 and the modes from step 4.
 
 ## Modes
 
@@ -55,13 +55,13 @@ like when the API fails", without a separate prototype for each.
 A prototype that has modes adds one file to its own folder:
 
 ```
-src/routes/prototypes/<name>/
-  index.tsx   # page component
+src/app/prototypes/<name>/
+  index.ts    # page component
   modes.ts    # this prototype's mode definitions
 ```
 
-`modes.ts` exports a `modes: Mode[]` array (`Mode` from
-`src/routes/modes.ts`), each entry with:
+`modes.ts` exports a `modes: Mode[]` array (`Mode` from the shared modes
+module), each entry with:
 
 - `id` — a number; this is what `?mode=<id>` switches on.
 - `name` — short label shown in the mode picker.
@@ -78,16 +78,14 @@ export const modes: Mode[] = [
 ];
 ```
 
-The prototype's `index.tsx` passes these to `<Prototype modes={modes}>`
-(`src/routes/Prototype.tsx`), which every prototype's page wraps its
-content in, and reads the active one from inside with
-`usePrototypeModes()` (`src/routes/modes.ts`). The prototype itself
-decides what each mode number actually does — which dataset, which
-handler set — the same way it already owns everything else about its own
-page.
+The prototype's page passes these to the shared prototype wrapper, which
+every prototype's page renders through, and reads the active one from
+inside via the shared modes service. The prototype itself decides what
+each mode number actually does — which dataset, which handler set — the
+same way it already owns everything else about its own page.
 
-A prototype with no modes still wraps its content in `<Prototype>` (just
-without a `modes` prop) — that's what makes the picker panel open via
+A prototype with no modes still renders through the shared wrapper (just
+without a modes list) — that's what makes the picker panel open via
 `?mode`/`?modes` for every prototype, not only ones that define modes.
 
 ### URL convention
@@ -101,9 +99,9 @@ without a `modes` prop) — that's what makes the picker panel open via
 
 ### The picker panel
 
-`ModesPanel` slides out from the right, listing every mode by name and
+The mode picker slides out from the side, listing every mode by name and
 description. Clicking one sets `?mode=<id>`, closes the panel, and
 re-renders the prototype in that mode.
 
-See `src/routes/prototypes/demo/` for a complete, working example (three
-modes: default, a failed load, and a failed submit).
+For a complete working example of modes in practice, see any existing
+prototype in this repo whose folder includes a `modes.ts`.

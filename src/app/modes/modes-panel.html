@@ -1,0 +1,25 @@
+<rec-panel
+  [opened]="modesService.isPickerOpen()"
+  (openedChange)="onOpenedChange($event)"
+  title="Modes"
+  placement="right"
+  [withCloseButton]="true"
+>
+  @if (modesService.modes().length > 0) {
+    <rec-stack gap="md">
+      <ul class="mode-list">
+        @for (mode of modesService.modes(); track mode.id) {
+          <li>
+            <rec-button
+              variant="text"
+              (click)="modesService.selectMode(mode.id)"
+            >
+              {{ mode.name }}
+            </rec-button>
+            <rec-text>{{ mode.description }}</rec-text>
+          </li>
+        }
+      </ul>
+    </rec-stack>
+  }
+</rec-panel>

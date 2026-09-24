@@ -1,0 +1,36 @@
+<rec-stack gap="lg">
+  <!--
+    Plain <h1>, not <rec-heading>: verified live that rec-heading's content
+    projection renders empty in this build (its six @switch-branch
+    <ng-content> outlets don't project under this AOT+linker pipeline,
+    even though the same pattern works fine in the adapter's own
+    JIT-compiled Storybook) — a real adapter bug, flagged upstream, not
+    something to fix from this repo. Revert once fixed.
+  -->
+  <h1 class="recursica_brand_typography_h1">Prototypes</h1>
+
+  @if (prototypes().length === 0) {
+    <rec-text>No prototypes yet — see docs/PROTOTYPE.md to add one.</rec-text>
+  } @else {
+    <rec-table>
+      <rec-table-thead>
+        <rec-table-tr>
+          <rec-table-th>Name</rec-table-th>
+          <rec-table-th>Description</rec-table-th>
+        </rec-table-tr>
+      </rec-table-thead>
+      <rec-table-tbody>
+        @for (prototype of prototypes(); track prototype.slug) {
+          <rec-table-tr>
+            <rec-table-td>
+              <a [routerLink]="['/prototypes', prototype.slug]">{{
+                prototype.title
+              }}</a>
+            </rec-table-td>
+            <rec-table-td>{{ prototype.description }}</rec-table-td>
+          </rec-table-tr>
+        }
+      </rec-table-tbody>
+    </rec-table>
+  }
+</rec-stack>
