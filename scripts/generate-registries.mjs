@@ -29,9 +29,14 @@ function writeGenerated(filePath, contents) {
 {
   const dataDir = path.join(appDir, "data");
   const names = discoverFolders(dataDir);
-  const imports = names.map((name, i) => `import * as dataset${i} from "./${name}";`).join("\n");
+  const imports = names
+    .map((name, i) => `import * as dataset${i} from "./${name}";`)
+    .join("\n");
   const entries = names
-    .map((name, i) => `  { name: ${JSON.stringify(name)}, description: dataset${i}.description },`)
+    .map(
+      (name, i) =>
+        `  { name: ${JSON.stringify(name)}, description: dataset${i}.description },`,
+    )
     .join("\n");
   writeGenerated(
     path.join(dataDir, "registry.generated.ts"),
@@ -43,11 +48,18 @@ function writeGenerated(filePath, contents) {
 {
   const apiDir = path.join(appDir, "api");
   const names = discoverFolders(apiDir);
-  const imports = names.map((name, i) => `import * as api${i} from "./${name}";`).join("\n");
-  const apiEntries = names
-    .map((name, i) => `  { name: ${JSON.stringify(name)}, description: api${i}.description },`)
+  const imports = names
+    .map((name, i) => `import * as api${i} from "./${name}";`)
     .join("\n");
-  const handlerSpreads = names.map((_, i) => `  ...api${i}.handlers,`).join("\n");
+  const apiEntries = names
+    .map(
+      (name, i) =>
+        `  { name: ${JSON.stringify(name)}, description: api${i}.description },`,
+    )
+    .join("\n");
+  const handlerSpreads = names
+    .map((_, i) => `  ...api${i}.handlers,`)
+    .join("\n");
   writeGenerated(
     path.join(apiDir, "registry.generated.ts"),
     `${imports}\n\n` +

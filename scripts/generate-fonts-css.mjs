@@ -22,7 +22,9 @@ function readJson(relPath) {
 
 function referencedTypeface(brand, slot) {
   const ref = brand?.brand?.fonts?.[slot]?.$value;
-  const match = typeof ref === "string" && ref.match(/^\{tokens\.font\.typefaces\.([^}]+)\}$/);
+  const match =
+    typeof ref === "string" &&
+    ref.match(/^\{tokens\.font\.typefaces\.([^}]+)\}$/);
   if (!match) {
     throw new Error(
       `generate-fonts-css: brand.fonts.${slot}.$value is missing or not a ` +
@@ -35,7 +37,10 @@ function referencedTypeface(brand, slot) {
 function googleFontsUrl(tokens, typefaceKey) {
   const entry = tokens?.tokens?.font?.typefaces?.[typefaceKey];
   const url = entry?.$extensions?.["com.google.fonts"]?.url;
-  if (typeof url !== "string" || !/^https:\/\/fonts\.googleapis\.com\//.test(url)) {
+  if (
+    typeof url !== "string" ||
+    !/^https:\/\/fonts\.googleapis\.com\//.test(url)
+  ) {
     throw new Error(
       `generate-fonts-css: tokens.font.typefaces.${typefaceKey} has no valid ` +
         `fonts.googleapis.com URL (got: ${JSON.stringify(url)})`,
@@ -57,4 +62,6 @@ const lines = [...typefaceKeys]
 
 const outPath = path.join(root, "src/recursica_fonts.css");
 writeFileSync(outPath, lines.join("\n") + "\n");
-console.log(`generate-fonts-css: wrote ${lines.length} font import(s) to src/recursica_fonts.css`);
+console.log(
+  `generate-fonts-css: wrote ${lines.length} font import(s) to src/recursica_fonts.css`,
+);
