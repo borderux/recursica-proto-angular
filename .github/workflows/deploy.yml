@@ -1,0 +1,63 @@
+# Deploys the prototype app to GitHub Pages on every push to main.
+#
+# Adapted from recursica-adapter-mantine-v8's deploy-storybook.yml (same
+# mechanism: JamesIves/github-pages-deploy-action pushing to gh-pages), with
+# two differences specific to this being a client-routed Vite app rather than
+# a static Storybook build:
+#
+# 1. Base path — GitHub Pages serves this repo under
+#    https://<owner>.github.io/<repo>/, so the build needs `--base=/<repo>/`
+#    or its asset URLs resolve against the domain root instead. The repo name
+#    is read from the GitHub context rather than hardcoded, since this is a
+#    template other repos get created from.
+# 2. SPA fallback — react-router's BrowserRouter relies on the server
+#    returning index.html for any deep link (e.g. /<repo>/prototypes/foo).
+#    GitHub Pages has no rewrite rules, but it does serve 404.html for any
+#    unmatched path, so copying the built index.html to 404.html makes deep
+#    links load the app instead of a real 404. Safe because the build uses
+#    absolute (not relative) asset paths, so it works regardless of how deep
+#    the requested path is.
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          HUSKY: 0
+
+      - name: Build
+        run: npm run build -- --base=/${{ github.event.repository.name }}/
+
+      - name: Add SPA fallback for client-side routing
+        run: cp dist/index.html dist/404.html
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: "./dist"
+          branch: gh-pages
+          clean: false
+          force: false

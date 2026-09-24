@@ -1,0 +1,12 @@
+{
+  "$schema": "https://raw.githubusercontent.com/borderux/recursica/main/packages/schemas/dist/RecursicaConfiguration_v2.json",
+  "config": {
+    "version": 2,
+    "projects": [
+      {
+        "name": "Recurisca Prototype Template",
+        "path": ""
+      }
+    ]
+  }
+}

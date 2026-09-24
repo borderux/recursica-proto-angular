@@ -1,0 +1,127 @@
+# Everything that needs to happen for a pull request against main, in one
+# workflow: verify the app builds/lints/type-checks, and deploy that same
+# build as a live preview. This used to be two workflows (a check job that
+# installed + built, and a separate preview job that installed + built
+# again) — merged into one so a PR only pays for install/build once, not
+# twice.
+#
+# `npm run build` already chains format → lint:fix → lint → tsc -b → vite
+# build (see package.json), so a single build step is the type-check, the
+# lint check, and the production build all at once — there's no separate
+# check-types/lint step here because that would just be a third and fourth
+# repetition of work `build` already fails on.
+#
+# Preview deploy via rossjrw/pr-preview-action, same as
+# recursica-adapter-mantine-v8's own deploy-pr-preview.yml (publishing under
+# a pr-preview/ subdirectory of the gh-pages branch, alongside the main app
+# deploy from deploy.yml). Runs for every PR — posts/updates an "App preview"
+# section in the PR description with the link, and tears the preview down
+# automatically when the PR closes.
+#
+# Base path: this is a client-routed Vite app (see deploy.yml), so the build
+# needs a `--base` matching exactly where pr-preview-action will publish it —
+# /<repo>/pr-preview/pr-<number>/ — or its asset URLs and deep links won't
+# resolve. The 404.html copy is the same SPA-fallback trick as deploy.yml.
+
+name: Pull Request
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+    branches: [main]
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  pull-requests: write
+
+# Allow concurrent deployments for different PRs
+concurrency: preview-${{ github.ref }}
+
+jobs:
+  build-and-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add pending message to PR description
+        if: github.event.action != 'closed'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request?.number;
+            if (!prNumber) return;
+            const existingBody = context.payload.pull_request.body || '';
+            const pendingSection = `## App preview\n\n> [!WARNING]\n> ⏳ **Please wait for 1 minute while our system automatically builds an app preview`;
+            const newBody = existingBody.includes('## App preview')
+              ? existingBody.replace(/## App preview[\s\S]*?(?=\n\n##|$)/, pendingSection)
+              : existingBody + '\n\n' + pendingSection;
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+              body: newBody
+            });
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        if: github.event.action != 'closed'
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        if: github.event.action != 'closed'
+        run: npm ci
+        env:
+          HUSKY: 0
+
+      # Type-checks, lints, and builds in one command — see header comment.
+      # Failing here (bad types, lint errors, or a broken build) fails the PR
+      # check; nothing downstream runs.
+      - name: Build
+        if: github.event.action != 'closed'
+        run: npm run build -- --base=/${{ github.event.repository.name }}/pr-preview/pr-${{ github.event.number }}/
+
+      - name: Add SPA fallback for client-side routing
+        if: github.event.action != 'closed'
+        run: cp dist/index.html dist/404.html
+
+      - name: Deploy preview
+        # No `if` needed — `action: auto` deploys on open/reopen/sync and
+        # tears down on close.
+        id: preview
+        uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: ./dist
+          preview-branch: gh-pages
+          umbrella-dir: pr-preview
+          action: auto
+
+      - name: Sleep for 30 seconds to allow CDN propagation
+        if: steps.preview.outputs.deployment-action == 'deploy'
+        run: sleep 30
+
+      - name: Update PR description with app preview URL
+        if: steps.preview.outputs.deployment-action == 'deploy'
+        uses: actions/github-script@v7
+        env:
+          PREVIEW_URL: ${{ steps.preview.outputs.preview-url }}
+        with:
+          script: |
+            const previewUrl = process.env.PREVIEW_URL;
+            const prNumber = context.payload.pull_request.number;
+            const existingBody = context.payload.pull_request.body || '';
+            const previewSection = `\n\n## App preview\n\n[View app preview](${previewUrl})\n`;
+            const newBody = existingBody.includes('## App preview')
+              ? existingBody.replace(/## App preview[\s\S]*?(?=\n\n##|$)/, `## App preview\n\n[View app preview](${previewUrl})\n`)
+              : existingBody + previewSection;
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+              body: newBody
+            });

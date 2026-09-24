@@ -1,0 +1,40 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependency directories
+node_modules/
+
+# Build outputs
+dist/
+dist-ssr/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# IDEs and editors
+.idea/
+.vscode/*.code-workspace
+.vscode/tasks.json
+.vscode/launch.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Local env files
+.env*.local
+
+# Typescript build cache
+*.tsbuildinfo
+
+# Generated at build time by vite.config.ts from recursica_tokens.json +
+# recursica_brand.json — see ARCHITECTURE.md
+src/recursica_fonts.css
