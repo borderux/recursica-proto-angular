@@ -1,0 +1,54 @@
+<rec-stack gap="rec-lg">
+  <rec-heading [order]="1">Demo Prototype</rec-heading>
+  <rec-text>
+    GPU/server inventory for an AI infrastructure company. Click a row to edit
+    it.
+  </rec-text>
+
+  @if (state().status === "loading") {
+    <rec-text>Loading…</rec-text>
+  } @else if (errorMessage(); as message) {
+    <rec-toast variant="error" title="Failed to load inventory">{{
+      message
+    }}</rec-toast>
+  } @else {
+    <rec-table>
+      <rec-table-thead>
+        <rec-table-tr>
+          <rec-table-th [sorted]="'asc'">Name</rec-table-th>
+          <rec-table-th>Type</rec-table-th>
+          <rec-table-th>Model</rec-table-th>
+          <rec-table-th>Datacenter</rec-table-th>
+          <rec-table-th>Status</rec-table-th>
+          <rec-table-th [variant]="'currency'">Utilization</rec-table-th>
+        </rec-table-tr>
+      </rec-table-thead>
+      <rec-table-tbody>
+        @for (item of rows(); track item.id) {
+          <rec-table-tr>
+            <rec-table-td>
+              <rec-button variant="text" (click)="openItem(item.id)">
+                {{ item.name }}
+              </rec-button>
+            </rec-table-td>
+            <rec-table-td>{{ item.type }}</rec-table-td>
+            <rec-table-td>{{ item.model }}</rec-table-td>
+            <rec-table-td>{{ item.datacenter }}</rec-table-td>
+            <rec-table-td>{{ item.status }}</rec-table-td>
+            <rec-table-td [variant]="'currency'">
+              {{ item.utilization }}%
+            </rec-table-td>
+          </rec-table-tr>
+        }
+      </rec-table-tbody>
+    </rec-table>
+  }
+</rec-stack>
+
+@if (selectedItem(); as item) {
+  <app-edit-item-modal
+    [item]="item"
+    (closed)="closeItem()"
+    (saved)="onSaved()"
+  />
+}

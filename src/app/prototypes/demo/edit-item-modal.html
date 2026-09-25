@@ -1,0 +1,91 @@
+<rec-modal
+  [opened]="modalOpened()"
+  [title]="'Edit ' + item().name"
+  (closed)="onCancel()"
+>
+  @if (form) {
+    <rec-stack gap="rec-md">
+      @if (submitError()) {
+        <rec-toast variant="error" title="Update failed">{{
+          submitError()
+        }}</rec-toast>
+      }
+
+      <rec-form-control-wrapper
+        label="Name"
+        [required]="true"
+        [error]="nameError()"
+      >
+        <rec-text-field
+          [value]="form.controls.name.value"
+          (valueChange)="onNameChange($event)"
+          [error]="!!nameError()"
+        />
+      </rec-form-control-wrapper>
+
+      <rec-form-control-wrapper label="Type">
+        <rec-dropdown
+          [value]="form.controls.type.value"
+          (valueChange)="onTypeChange($event)"
+          [data]="ASSET_TYPES"
+        />
+      </rec-form-control-wrapper>
+
+      <rec-form-control-wrapper
+        label="Model"
+        [required]="true"
+        [error]="modelError()"
+      >
+        <rec-text-field
+          [value]="form.controls.model.value"
+          (valueChange)="onModelChange($event)"
+          [error]="!!modelError()"
+        />
+      </rec-form-control-wrapper>
+
+      <rec-form-control-wrapper label="Datacenter">
+        <rec-dropdown
+          [value]="form.controls.datacenter.value"
+          (valueChange)="onDatacenterChange($event)"
+          [data]="DATACENTERS"
+        />
+      </rec-form-control-wrapper>
+
+      <rec-form-control-wrapper label="Status">
+        <rec-dropdown
+          [value]="form.controls.status.value"
+          (valueChange)="onStatusChange($event)"
+          [data]="ASSET_STATUSES"
+        />
+      </rec-form-control-wrapper>
+
+      <rec-number-input
+        label="Utilization %"
+        [min]="0"
+        [max]="100"
+        [value]="form.controls.utilization.value"
+        (valueChange)="onUtilizationChange($event)"
+        [error]="utilizationError()"
+      />
+
+      <rec-text-area
+        label="Notes"
+        [value]="form.controls.notes.value"
+        (valueChange)="onNotesChange($event)"
+      />
+    </rec-stack>
+  }
+
+  <rec-modal-footer>
+    <rec-button
+      variant="outline"
+      (click)="onCancel()"
+      [disabled]="isSubmitting()"
+    >
+      Cancel
+    </rec-button>
+    <rec-button (click)="onSubmit()" [loading]="isSubmitting()"
+      >Save</rec-button
+    >
+  </rec-modal-footer>
+</rec-modal>
