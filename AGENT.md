@@ -152,3 +152,7 @@ Forms in `ARCHITECTURE.md` for why and how.
   must come from the npm registry in `package.json` like any other dependency.
   Never symlink it, `npm link` it, use a `file:`/`link:` path to a local
   checkout, or vendor it as a packed `.tgz` — pull published versions only.
+- Only use Recurica components for designs. Never create your own component based on html primitives or tags
+- You can create compound components out of Recursica components
+- Do not over-style or overStyle Recursica components
+- Do not create your own styling
