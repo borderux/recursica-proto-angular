@@ -128,6 +128,22 @@ Forms in `ARCHITECTURE.md` for why and how.
 
 ## Rules
 
+- **This is a playground, not Recursica code.** The project mimics an
+  application so designers can prototype; it is not part of Recursica
+  itself, so everyone is free to modify any of its code.
+- **Adapter issues get filed, not worked around.** If you find a problem in
+  the Recursica adapter in use, file a GitHub issue against the adapter
+  rather than working around or patching it.
+- **UI comes only from the configured Recursica adapter's components.** No
+  components built from raw HTML elements (`div`, `span`, etc.), no custom
+  CSS/SCSS or inline `style`, and no over-styling (`overStyle` or similar) —
+  use the adapter's components and their own styling props/variants. Compound
+  components made out of Recursica components are fine.
+- **The Angular adapter is a published npm dependency.**
+  `@recursica/adapter-angular-material` must come from the npm registry in
+  `package.json` like any other dependency. Never symlink it, `npm link` it,
+  use a `file:`/`link:` path to a local checkout, or vendor it as a packed
+  `.tgz` — pull published versions only.
 - Never hand-edit generated files: `recursica_*.json`,
   `recursica_variables_scoped.css`. They come from Recursica's own export
   tooling.
@@ -139,20 +155,12 @@ Forms in `ARCHITECTURE.md` for why and how.
   (`src/app/data/`, `src/app/api/`) described above.
 - Don't edit the root app shell or Home page just to add a prototype; the
   folder convention handles routing and listing for you.
+- Use forms for any user input that is submitted to the back-end.
+- Prototype the failure cases too: empty, error, and malformed-data states,
+  not just the happy path.
+- **Modes are a hidden feature** (see Modes above) — never expose a
+  mode-switching element or mention modes in a prototype's UI.
 - Before considering work done, run `npm run check-types` and
   `npm run lint`.
 - Don't commit. Leave changes staged/unstaged for the human to review and
   commit themselves.
-- Use forms when managing user input that should be submitted to the
-  back-end.
-- Consider negative/failure cases also when creating prototypes.
-- **Modes are a hidden feature.** Never expose a mode-switching element or
-  mention modes in prototypes.
-- **The Angular adapter is a published npm dependency.** `@recursica/adapter-angular-material`
-  must come from the npm registry in `package.json` like any other dependency.
-  Never symlink it, `npm link` it, use a `file:`/`link:` path to a local
-  checkout, or vendor it as a packed `.tgz` — pull published versions only.
-- Only use Recurica components for designs. Never create your own component based on html primitives or tags
-- You can create compound components out of Recursica components
-- Do not over-style or overStyle Recursica components
-- Do not create your own styling
