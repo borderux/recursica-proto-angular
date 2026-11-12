@@ -79,13 +79,13 @@ src/
     app.ts          # Root shell: wraps everything in the theme provider
     app.routes.ts   # one route per page/prototype, generated automatically
     home/           # "/" — lists every discovered prototype
-    modes/          # Mode type + the `?mode=<id>` convention, the picker
+    stories/        # Story type + the `?story=<id>` convention, the picker
                      #   panel, and the wrapper every prototype's page
                      #   renders through
     prototypes/     # auto-discovered: dropping a folder in registers a
       <slug>/       #   route, no manual wiring
         index.ts    #   page component
-        modes.ts    #   optional: this prototype's mode definitions
+        stories.ts  #   optional: this prototype's story definitions
     data/           # Mock datasets shared across prototypes
       <name>/       #   a typed, documented data array; import it directly
                      #   from a prototype for full type safety
@@ -103,11 +103,11 @@ Home (`/`) lists every discovered prototype, each self-contained in its own fold
 
 ## Prototype conventions
 
-- **Isolation.** No code sharing between prototypes — no shared code or folders outside a prototype's own folder, other than the app chrome, the routing registry, the modes convention, and the shared mock data/API folders below. A prototype must not import from or modify another prototype's folder.
+- **Isolation.** No code sharing between prototypes — no shared code or folders outside a prototype's own folder, other than the app chrome, the routing registry, the stories convention, and the shared mock data/API folders below. A prototype must not import from or modify another prototype's folder.
 - **Mock data & mock APIs are the two deliberate exceptions.** Real prototypes need to call something, so typed, documented datasets and [MSW](https://mswjs.io/) handlers are shared and reusable across prototypes. Each dataset/API also exports a `description` string so its purpose is discoverable without opening the file.
 - **Bad-data and API-error scenarios are first-class, not an afterthought.** Every dataset ships bad-data sets alongside the good one (empty, and malformed/schema-violating records), and every mock API ships error/malformed handlers alongside its default one.
-- **Every prototype renders through the shared page wrapper**, which always mounts the mode-picker panel — so `?mode`/`?modes` opens it even for a prototype with no modes defined, not just ones that opted in.
-- **Modes select which mock data/API behavior a prototype uses**, by number, via `?mode=<id>`. A prototype that wants modes adds a colocated `modes.ts`, and reads the active one from the shared modes service. See `docs/PROTOTYPE.md` for the designer-facing process.
+- **Every prototype renders through the shared page wrapper**, which always mounts the story-picker panel — so `?story`/`?stories` opens it even for a prototype with no stories defined, not just ones that opted in.
+- **Stories select which mock data/API behavior a prototype uses**, by number, via `?story=<id>`. A prototype that wants stories adds a colocated `stories.ts`, and reads the active one from the shared stories service. See `docs/PROTOTYPE.md` for the designer-facing process.
 - **Everything is routable**, including modals — a modal should be routable within its page (e.g. via a search param) so it can be navigated back to, shared, or reloaded without being lost.
 - **State lives at the page level; components are stateless.** Transitions between pages pass state through the URL (path segments and search params) rather than global state or storage, so routes stay shareable/restorable from the URL alone.
 - **Global state, when the URL can't hold enough:** a scoped service the prototype owns and provides for itself. There's no shared/app-level state, since prototypes can't know about each other.

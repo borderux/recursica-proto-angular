@@ -1,6 +1,10 @@
-import { Component, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, inject, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import {
+  ButtonComponent,
+  ContainerComponent,
+  HeadingComponent,
+  LayerComponent,
   StackComponent,
   TableComponent,
   TableTbodyComponent,
@@ -22,6 +26,10 @@ interface PrototypeSummary {
   selector: 'app-home',
   imports: [
     RouterLink,
+    ButtonComponent,
+    ContainerComponent,
+    HeadingComponent,
+    LayerComponent,
     StackComponent,
     TableComponent,
     TableTheadComponent,
@@ -34,6 +42,8 @@ interface PrototypeSummary {
   templateUrl: './home.html',
 })
 export class HomeComponent {
+  private readonly router = inject(Router);
+
   protected readonly prototypes = signal<PrototypeSummary[]>([]);
 
   constructor() {
@@ -50,5 +60,9 @@ export class HomeComponent {
       summaries.sort((a, b) => a.title.localeCompare(b.title));
       this.prototypes.set(summaries);
     });
+  }
+
+  protected goToUsageInfo(): void {
+    this.router.navigate(['/usage-info']);
   }
 }

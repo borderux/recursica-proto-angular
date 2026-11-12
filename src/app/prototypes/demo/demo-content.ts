@@ -21,12 +21,12 @@ import {
   submitErrorHandlers,
 } from '../../api/inventory';
 import type { InventoryItem } from '../../data/inventory';
-import { PrototypeModesService } from '../../modes/prototype-modes.service';
+import { PrototypeStoriesService } from '../../stories/prototype-stories.service';
 import { EditItemModalComponent } from './edit-item-modal';
 
-// Maps each mode's id to the handler set it swaps into /api/inventory at
+// Maps each story's id to the handler set it swaps into /api/inventory at
 // runtime (worker.use / worker.resetHandlers) — see src/app/api/inventory/.
-const HANDLERS_BY_MODE: Record<number, typeof handlers> = {
+const HANDLERS_BY_STORY: Record<number, typeof handlers> = {
   1: handlers,
   2: loadErrorHandlers,
   3: submitErrorHandlers,
@@ -56,7 +56,7 @@ type LoadState =
   templateUrl: './demo-content.html',
 })
 export class DemoContentComponent {
-  private readonly modesService = inject(PrototypeModesService);
+  private readonly storiesService = inject(PrototypeStoriesService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -82,13 +82,13 @@ export class DemoContentComponent {
   );
 
   constructor() {
-    // The active mode's handlers stay swapped in for as long as it's
+    // The active story's handlers stay swapped in for as long as it's
     // selected, since both the initial load (GET) and a later save (PATCH)
     // need to see the same scenario.
     effect((onCleanup) => {
-      const mode = this.modesService.activeMode();
-      if (!mode) return;
-      worker.use(...HANDLERS_BY_MODE[mode.id]);
+      const story = this.storiesService.activeStory();
+      if (!story) return;
+      worker.use(...HANDLERS_BY_STORY[story.id]);
       this.load();
       onCleanup(() => worker.resetHandlers());
     });

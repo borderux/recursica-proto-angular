@@ -1,0 +1,25 @@
+<rec-panel
+  [opened]="storiesService.isPickerOpen()"
+  (openedChange)="onOpenedChange($event)"
+  title="Stories"
+  placement="right"
+  [withCloseButton]="true"
+>
+  @if (storiesService.stories().length > 0) {
+    <rec-stack gap="md">
+      <ul class="story-list">
+        @for (story of storiesService.stories(); track story.id) {
+          <li>
+            <rec-button
+              variant="text"
+              (click)="storiesService.selectStory(story.id)"
+            >
+              {{ story.name }}
+            </rec-button>
+            <rec-text>{{ story.description }}</rec-text>
+          </li>
+        }
+      </ul>
+    </rec-stack>
+  }
+</rec-panel>

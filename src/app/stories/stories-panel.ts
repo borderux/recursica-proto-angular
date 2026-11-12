@@ -5,20 +5,20 @@ import {
   StackComponent,
   TextComponent,
 } from '@recursica/adapter-angular-material';
-import { PrototypeModesService } from './prototype-modes.service';
+import { PrototypeStoriesService } from './prototype-stories.service';
 
 @Component({
-  selector: 'app-modes-panel',
+  selector: 'app-stories-panel',
   imports: [ButtonComponent, PanelComponent, StackComponent, TextComponent],
-  templateUrl: './modes-panel.html',
-  styleUrl: './modes-panel.scss',
+  templateUrl: './stories-panel.html',
+  styleUrl: './stories-panel.scss',
 })
-export class ModesPanelComponent {
-  protected readonly modesService = inject(PrototypeModesService);
+export class StoriesPanelComponent {
+  protected readonly storiesService = inject(PrototypeStoriesService);
 
   protected onOpenedChange(opened: boolean): void {
     if (!opened) {
-      this.modesService.closePicker();
+      this.storiesService.closePicker();
     }
   }
 }
