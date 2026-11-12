@@ -1,10 +1,10 @@
-import type { Mode } from '../../modes/mode';
+import type { Story } from '../../stories/story';
 
 /**
- * This prototype's modes — each swaps in a different set of handlers for
+ * This prototype's stories — each swaps in a different set of handlers for
  * `/api/inventory` (see `index.ts` and `src/app/api/inventory/`).
  */
-export const modes: Mode[] = [
+export const stories: Story[] = [
   {
     id: 1,
     name: 'Default',

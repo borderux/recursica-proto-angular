@@ -1,0 +1,33 @@
+<rec-container size="lg">
+  <rec-stack gap="lg">
+    <a [routerLink]="['/']">← Back to Prototypes</a>
+    <rec-heading [order]="1">How to Use</rec-heading>
+    <rec-text>
+      Every prototype in this app can define one or more
+      <strong>stories</strong>
+      — named variants that swap in different data or API behavior, like a
+      normal load, an empty state, or an error.
+    </rec-text>
+    <rec-stack gap="xs">
+      <rec-heading [order]="2">Opening the stories panel</rec-heading>
+      <rec-text>
+        Add <code>?story</code> or <code>?stories</code> to the end of any
+        prototype's URL to open the story picker. It lists every story available
+        for that prototype by name and description — click one to switch to it.
+      </rec-text>
+      @if (firstPrototypeSlug()) {
+        <rec-button (click)="openStoriesPanel()">
+          Open the stories panel
+        </rec-button>
+      }
+    </rec-stack>
+    <rec-stack gap="xs">
+      <rec-heading [order]="2">Linking directly to a story</rec-heading>
+      <rec-text>
+        Add <code>?story=&lt;id&gt;</code> (for example, <code>?story=2</code>)
+        to jump straight to a specific story without opening the picker — handy
+        for sharing a link to one exact state.
+      </rec-text>
+    </rec-stack>
+  </rec-stack>
+</rec-container>

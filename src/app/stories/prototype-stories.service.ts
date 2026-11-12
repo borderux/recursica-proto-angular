@@ -1,46 +1,46 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import type { Mode } from './mode';
+import type { Story } from './story';
 
 /**
  * One instance per `<app-prototype>` (component-provided, not root) — each
- * prototype page owns its own modes and its own slice of the `?mode`/`?modes`
+ * prototype page owns its own stories and its own slice of the `?story`/`?stories`
  * URL convention, the same way `<Prototype>` scoped a React context per page.
  */
 @Injectable()
-export class PrototypeModesService {
+export class PrototypeStoriesService {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
-  private readonly modesSignal = signal<Mode[]>([]);
-  readonly modes = this.modesSignal.asReadonly();
+  private readonly storiesSignal = signal<Story[]>([]);
+  readonly stories = this.storiesSignal.asReadonly();
 
   private readonly queryParamMap = toSignal(this.route.queryParamMap);
 
-  setModes(modes: Mode[]): void {
-    this.modesSignal.set(modes);
+  setStories(stories: Story[]): void {
+    this.storiesSignal.set(stories);
   }
 
-  readonly activeMode = computed<Mode | undefined>(() => {
-    const modes = this.modesSignal();
-    if (modes.length === 0) return undefined;
-    const raw = this.queryParamMap()?.get('mode');
+  readonly activeStory = computed<Story | undefined>(() => {
+    const stories = this.storiesSignal();
+    if (stories.length === 0) return undefined;
+    const raw = this.queryParamMap()?.get('story');
     const id =
       raw === null || raw === undefined || raw === '' ? NaN : Number(raw);
-    return modes.find((mode) => mode.id === id) ?? modes[0];
+    return stories.find((story) => story.id === id) ?? stories[0];
   });
 
   readonly isPickerOpen = computed<boolean>(() => {
     const params = this.queryParamMap();
     if (!params) return false;
-    return params.has('modes') || params.get('mode') === '';
+    return params.has('stories') || params.get('story') === '';
   });
 
-  selectMode(id: number): void {
+  selectStory(id: number): void {
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { mode: id, modes: null },
+      queryParams: { story: id, stories: null },
       queryParamsHandling: 'merge',
     });
   }
@@ -48,7 +48,7 @@ export class PrototypeModesService {
   closePicker(): void {
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { mode: null, modes: null },
+      queryParams: { story: null, stories: null },
       queryParamsHandling: 'merge',
     });
   }
